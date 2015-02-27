@@ -1,4 +1,4 @@
 # td-issues
 Code and data for TD paper
 
-# **Will be populated closer to paper deadlines**
+**Will be populated closer to paper deadlines**
