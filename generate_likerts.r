@@ -1,5 +1,3 @@
-path <- 'your/path/'
-
 # remove NA data
 removeNA <- function(df) {
   for(i in seq_along(df)) {
@@ -18,10 +16,10 @@ library(likert)
 mylevels <- c('Strongly Disagree', 'Disagree', 'Neither Agree nor Disagree', 'Agree', 'Strongly Agree')
 
 # q80 is Fig 2
-q80data = read.csv(paste(path, 'qid80.csv'))
+#q80data = read.csv('/Users/nernst/Documents/projects//techdebt/survey/FSE data/qid80.csv')
 # q84 is Fig 4
-q83data = read.csv(paste(path, 'qid83.csv'))
-f51data = read.csv(paste(path, 'f51.csv'))
+q83data = read.csv('/Users/nernst/Documents/projects/techdebt/survey/FSE data/qid83.csv')
+f51data = read.csv('/Users/nernst/Documents/projects/techdebt/survey/FSE data/f51.csv')
 # #   see https://github.com/jbryer/likert/blob/master/demo/UnusedLevels.R - remove unneeded (unanswered qs)3
 
 # all in q83 (Q14)
@@ -31,14 +29,14 @@ f52cols <- c("Technical.debt.is.not.simply.bad.quality.but.includes.strategic.ar
 
 f51cols <- c("Lack of awareness of technical debt was/is a problem","Incurring technical debt is strategically used to support the business objectives (e.g., low cost/short schedule)","Technical.debt.implies.dealing.with.both.principal.and.interest.","Technical.debt.assessment.depends.on.future.outcomes.","Technical.debt.is.a.metaphor.with.little.implication.for.practice.")
 
-q80data <- removeCols(q80cols,q80data)
+#q80data <- removeCols(q80cols,q80data)
 q83data <- removeCols(f52cols,q83data)
 
-colnames(q80data) <- c("Lack of Awareness is a Problem", "TD Explicitly Managed", "Consequences costly","Measuring Painful")
-colnames(q83data) <- c("TD Also Architectural", "Defects Not TD", "Process Not TD", "Unimplemented Features Not TD", "TD Not Measurable","TD Part of S/W Development Context")
-colnames(f51data) <- c("Lack of Awareness is a Problem","TD is Used Strategically","TD Includes Both Principal and Interest", "TD Depends on Future Outcomes","TD is Just a Metaphor")
+#colnames(q80data) <- c("Lack of Awareness is a Problem", "TD Explicitly Managed", "Consequences costly","Measuring Painful")
+colnames(q83data) <- c("TD also architectural", "Defects not TD", "Process not TD", "Unimplemented features not TD", "TD not measurable","TD part of S/W development context")
+colnames(f51data) <- c("Lack of awareness of TD is a problem","TD is used strategically","TD includes both principal and interest", "TD depends on future outcomes","TD is just a metaphor")
 
-q80data <- removeNA(q80data)
+#q80data <- removeNA(q80data)
 f51data <- removeNA(f51data)
 q83data <- removeNA(q83data)
 l <- likert(q83data)
@@ -64,6 +62,7 @@ likert.bar.plot(l,text.size=4,text.color="#383737") +
 #         ) + geom_text(aes(label=paste(stdapp.data$stdapproach,"%")), vjust=-.5, size=7)
 
 
+## System Age Vs TD level ## 
 # crosstab created in Qualtrics but could easily do it with xtab or table()
 # http://stackoverflow.com/questions/13016022/ggplot2-heatmaps-using-different-gradients-for-categories/13016912
 xtab.df <- data.frame(c('Less than 3 years', '3-5 years', 'More than 6 years'), c(80, 82.71,88.63),c(14.07,15.04,8.7), c(5.93,2.26,2.68))
@@ -88,7 +87,7 @@ ggplot(xtab.m, aes(variable, xtab.m$"System Age")) +
 # ggsave('FSE data/age-arch-heatmap.png')
 
 # load the whole table
-all3 <- read.csv(paste(path, 'ALL3_TD_Survey.csv'), header=T,na.strings=c(""))
+all3 <- read.csv('/Users/nernst/Documents/projects/techdebt/survey/FSE data/ALL3_TD_Survey.csv', header=T,na.strings=c(""))
 #cross tab of system age (75) vs. TD is also architectural (83_1) or dev experience (98)
 #first, group by system age into 3
 u <- factor(all3$QID75)
@@ -122,7 +121,7 @@ a[3,]
 
 # generate clusters of codes
 # assumes a list of ID, Code, possibly with multiple codes per id. Order not important
-codes <- read.csv(paste(path,'codes-cluster.csv'))
+codes <- read.csv('/Users/nernst/Documents/projects/techdebt/survey/FSE data/codes-cluster.csv')
 b <- t(table(codes))
 b <- b %*% t(b)
 #b now an adjacency matrix. Values are useful for showing overall codes on the diagonal.
@@ -150,24 +149,52 @@ plot(g, layout=layout1)
 fc <- fastgreedy.community(g)
 dendPlot(fc)
 
+## Plot top 3 choices from survey ##
+library(reshape2)
+library(ggplot2)
+
+mylevels_100 <- c(1:3)
 removeNA_100 <- function(df) {
   for(i in seq_along(df)) {
     df[,i] <- factor(df[,i], levels=mylevels_100)
   }
   df
 }
-mylevels_100 <- c(1:3)
-q100cols <- c("Obsolete Code","Overly complex code","Inter-module dependencies","Dependencies on external software packages","Code duplication or repetitive edits","Lack of code documentation","Dependencies on external team's code","Bad architecture choices","Obsolete technology ","Poor deployment process","Inadequate testing","Insufficient test automation","Inefficient CM/build infrastructure")
+
+q100cols <- c("Obsolete code","Overly complex code","Inter module dependencies","Dependencies on external software packages",
+              "Code duplication or repetitive edits","Lack of code documentation","Dependencies on external team's code",
+              "Bad architecture choices","Obsolete technology ","Poor deployment process","Inadequate testing",
+              "Insufficient test automation","Inefficient CM/build infrastructure")
 
 # plot grouped data for top X choices (arch, code, other)
 qid100 <- all3[,substr(names(all3), 1,6) == 'QID100']
 qid100 <- qid100[,1:13]
+colnames(qid100) <- q100cols
 removeNA_100(qid100)
 # reduce to 2 d array with value = Rank and variables = choices
 qid100.melt <- melt(qid100,,c(1:13),na.rm=TRUE,value.name="Rank")
 qid100.melt$Rank <- as.integer(qid100.melt$Rank)
 
-library(reshape2)
-library(ggplot2)
 #stacked bar chart with 1,2,3 ranks
 c <- ggplot(qid100.melt,aes(factor(qid100.melt$variable),fill=factor(Rank))) + geom_bar()+ geom_bar(width=.5)
+
+## Level of Mgmt ##
+low.colour <- '#D8B365'
+high.colour <- '#5AB4AC' # from Likert, for standardization
+labels <- c("Company Level", "Business Unit Level", "Program Level", "Team Level", "No Std Approach", "Other")
+stdapproach <- c(6.1, 10.2,12.0,25.1,65.3,2.2) # data taken from Qualtrics directly
+stdapp.data <- data.frame(labels,stdapproach)
+stdapp.data <- stdapp.data[1:5,] # get rid of Other
+
+ggplot(stdapp.data,aes(x=factor(labels,as.character(stdapp.data$labels)),y=stdapp.data$stdapproach))  +
+  geom_bar(stat = "identity",  fill=high.colour) +
+  labs(x=NULL,y=NULL) +
+  theme(panel.background = element_blank(),
+        panel.grid.minor = element_line(color = "gray"),
+        axis.text.y = element_text(size=15, colour = 'black'),
+        axis.text.x = element_blank()
+  ) + 
+  geom_text(aes(label=paste(sprintf("%.01f", stdapp.data$stdapproach),"%")), hjust=-.05,vjust=0, size=6)  + 
+  coord_flip()+
+  scale_y_continuous(limits=c(0,75))
+  
