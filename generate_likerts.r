@@ -15,28 +15,20 @@ removeCols <- function(cols, df) {
 library(likert)
 mylevels <- c('Strongly Disagree', 'Disagree', 'Neither Agree nor Disagree', 'Agree', 'Strongly Agree')
 
-# q80 is Fig 2
-#q80data = read.csv('/Users/nernst/Documents/projects//techdebt/survey/FSE data/qid80.csv')
-# q84 is Fig 4
 q83data = read.csv('/Users/nernst/Documents/projects/techdebt/survey/FSE data/qid83.csv')
 f51data = read.csv('/Users/nernst/Documents/projects/techdebt/survey/FSE data/f51.csv')
 # #   see https://github.com/jbryer/likert/blob/master/demo/UnusedLevels.R - remove unneeded (unanswered qs)3
 
 # all in q83 (Q14)
 f52cols <- c("Technical.debt.is.not.simply.bad.quality.but.includes.strategic.architectural.decisions","Defects.are.not.technical.debt","Lack.of.process.is.not.technical.debt","New.features.not.yet.implemented.are.not.technical.debt","Technical.debt.is.not.directly.measureable","Technical.debt.should.not.be.treated.in.isolation.from.the.software.development.context")
-# 14-2 "Technical.debt.can.be.introduced.by.context.shift"
-# 14-10 .Technical.debt.should.not.be.completely.eliminated.
-
 f51cols <- c("Lack of awareness of technical debt was/is a problem","Incurring technical debt is strategically used to support the business objectives (e.g., low cost/short schedule)","Technical.debt.implies.dealing.with.both.principal.and.interest.","Technical.debt.assessment.depends.on.future.outcomes.","Technical.debt.is.a.metaphor.with.little.implication.for.practice.")
 
 #q80data <- removeCols(q80cols,q80data)
 q83data <- removeCols(f52cols,q83data)
 
-#colnames(q80data) <- c("Lack of Awareness is a Problem", "TD Explicitly Managed", "Consequences costly","Measuring Painful")
 colnames(q83data) <- c("TD also architectural", "Defects not TD", "Process not TD", "Unimplemented features not TD", "TD not measurable","TD part of S/W development context")
 colnames(f51data) <- c("Lack of awareness of TD is a problem","TD is used strategically","TD includes both principal and interest", "TD depends on future outcomes","TD is just a metaphor")
 
-#q80data <- removeNA(q80data)
 f51data <- removeNA(f51data)
 q83data <- removeNA(q83data)
 l <- likert(q83data)
@@ -45,22 +37,6 @@ likert.bar.plot(l,text.size=4,text.color="#383737") +
     theme(axis.text.x = element_blank(), axis.text.y = element_text(size="14",colour="black",face="italic")) +
     theme(panel.background = element_blank()) +
     theme(legend.title = element_blank(),legend.text = element_text(size = 12), legend.direction = "horizontal", legend.position="bottom")
-
-# plot various bar charts - latest in Excel
-# low.colour <- '#D8B365'
-# high.colour <- '#5AB4AC' # from Likert, for standardization
-# labels <- c("Company Level", "Business Unit Level", "Program Level", "Team Level", "No Std Approach", "Other")
-# stdapproach <- c(6.1, 10.2,12.0,25.1,65.3,2.2)
-# stdapp.data <- data.frame(labels,stdapproach)
-# stdapp.data <- stdapp.data[1:5,] # get rid of None
-# ggplot(stdapp.data,aes(x=factor(labels,as.character(stdapp.data$labels)),y=stdapp.data$stdapproach))  +
-#   geom_bar(stat = "identity", colour='black', fill=high.colour) +
-#   labs(x="",y="") +
-#   theme(panel.background = element_blank(),
-#         axis.text = element_text(size=15, colour = 'black'),
-#         axis.text.x = element_text(colour='black',size=14,vjust=1,hjust=1,angle=30)
-#         ) + geom_text(aes(label=paste(stdapp.data$stdapproach,"%")), vjust=-.5, size=7)
-
 
 ## System Age Vs TD level ## 
 # crosstab created in Qualtrics but could easily do it with xtab or table()
@@ -178,15 +154,16 @@ qid100.melt$Rank <- as.integer(qid100.melt$Rank)
 #stacked bar chart with 1,2,3 ranks
 c <- ggplot(qid100.melt,aes(factor(qid100.melt$variable),fill=factor(Rank))) + geom_bar()+ geom_bar(width=.5)
 
-## Level of Mgmt ##
+## Level of Mgmt and Point Identified ##
 low.colour <- '#D8B365'
 high.colour <- '#5AB4AC' # from Likert, for standardization
-labels <- c("Company Level", "Business Unit Level", "Program Level", "Team Level", "No Std Approach", "Other")
+
+stdlabels <- c("Company Level", "Business Unit Level", "Program Level", "Team Level", "No Std Approach", "Other")
 stdapproach <- c(6.1, 10.2,12.0,25.1,65.3,2.2) # data taken from Qualtrics directly
-stdapp.data <- data.frame(labels,stdapproach)
+stdapp.data <- data.frame(stdlabels,stdapproach)
 stdapp.data <- stdapp.data[1:5,] # get rid of Other
 
-ggplot(stdapp.data,aes(x=factor(labels,as.character(stdapp.data$labels)),y=stdapp.data$stdapproach))  +
+ggplot(stdapp.data,aes(x=factor(stdlabels,as.character(stdapp.data$labels)),y=stdapp.data$stdapproach))  +
   geom_bar(stat = "identity",  fill=high.colour) +
   labs(x=NULL,y=NULL) +
   theme(panel.background = element_blank(),
@@ -197,4 +174,43 @@ ggplot(stdapp.data,aes(x=factor(labels,as.character(stdapp.data$labels)),y=stdap
   geom_text(aes(label=paste(sprintf("%.01f", stdapp.data$stdapproach),"%")), hjust=-.05,vjust=0, size=6)  + 
   coord_flip()+
   scale_y_continuous(limits=c(0,75))
-  
+
+identify <- c(16, 21, 25, 25,27,29,31,31) # taken from QUaltrics 
+identify_labels <- c("Using TD tools", "Result of slowing cadence", "Part of systematic arch. eval.", 
+                     "Explicit part of backlog", "Not identified/Other", "Part of overall risk mgmt.", 
+                     "Retrospectives", "Implicit part of backlog")
+identify.data <- data.frame(identify_labels, identify)
+
+# should be function!
+ggplot(identify.data,aes(x=factor(identify_labels,as.character(identify.data$identify_labels)),y=identify.data$identify))  +
+  geom_bar(stat = "identity",  fill=high.colour, width=0.75) +
+  labs(x=NULL,y=NULL) +
+  theme(panel.background = element_blank(),
+        panel.grid.minor = element_line(color = "gray"),
+        axis.text.y = element_text(size=15, colour = 'black'),
+        axis.text.x = element_blank()
+  ) + 
+  geom_text(aes(label=paste(sprintf("%.00f", identify.data$identify),"%")), hjust=-.05,vjust=0, size=6)  + 
+  coord_flip()+
+  scale_y_continuous(limits=c(0,35))
+
+tool <- c(28,11,10,10,9,6,5,5,5,3,3,3,3)
+tool <- rev(tool)
+tool_labels <- c("Issue tracker", "Social process", "Depend. analysis", "Security analysis", 
+                "Code rule checkers", "Code metrics", "Test automation", "Excel", "Other", "IDE",
+                "Code coverage", "CI/Build", "Inhouse TD")
+tool_labels <- rev(tool_labels)
+tool.data <- data.frame(tool_labels, tool)
+
+ggplot(tool.data,aes(x=factor(tool_labels,as.character(tool.data$tool_labels)),y=tool.data$tool))  +
+  geom_bar(stat = "identity",  fill=high.colour, width=0.75) +
+  labs(x=NULL,y=NULL) +
+  theme(panel.background = element_blank(),
+        panel.grid.minor = element_line(color = "gray"),
+        axis.text.y = element_text(size=15, colour = 'black'),
+        axis.text.x = element_blank()
+  ) + 
+  geom_text(aes(label=paste(sprintf("%.00f", tool.data$tool),"%")), hjust=-.05,vjust=0, size=6)  + 
+  coord_flip()+
+  scale_y_continuous(limits=c(0,33))
+
